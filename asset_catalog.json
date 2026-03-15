@@ -1,0 +1,58 @@
+{
+  "categories": {
+    "nature": [
+      {
+        "assetId": 1234567890,
+        "name": "Tree Pack Placeholder"
+      },
+      {
+        "assetId": 1234567891,
+        "name": "Rock Cluster Placeholder"
+      }
+    ],
+    "buildings": [
+      {
+        "assetId": 1234567892,
+        "name": "Village House Placeholder"
+      }
+    ],
+    "fantasy": [
+      {
+        "assetId": 1234567893,
+        "name": "Fantasy Lamp Placeholder"
+      },
+      {
+        "assetId": 1234567894,
+        "name": "Stone Arch Placeholder"
+      }
+    ],
+    "scifi": [
+      {
+        "assetId": 1234567895,
+        "name": "Sci-Fi Crate Placeholder"
+      }
+    ],
+    "horror": [
+      {
+        "assetId": 1234567896,
+        "name": "Gravestone Placeholder"
+      }
+    ],
+    "obby": [
+      {
+        "assetId": 1234567897,
+        "name": "Obby Platform Placeholder"
+      }
+    ],
+    "props": [
+      {
+        "assetId": 1234567898,
+        "name": "Barrel Placeholder"
+      },
+      {
+        "assetId": 1234567899,
+        "name": "Torch Placeholder"
+      }
+    ]
+  }
+}
