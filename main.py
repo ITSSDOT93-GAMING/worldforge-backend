@@ -11,10 +11,7 @@ from pydantic import BaseModel, Field
 
 app = FastAPI()
 
-PUBLIC_BASE_URL = os.getenv(
-    "PUBLIC_BASE_URL",
-    "https://worldforge-backend-production.up.railway.app",
-).rstrip("/")
+PUBLIC_BASE_URL = https://worldforge-backend-production.up.railway.app/
 
 ROBLOX_SEARCH_URL = "https://apis.roblox.com/toolbox-service/v1/marketplace/search"
 
