@@ -223,9 +223,9 @@ def village_props(biome: str, size: str) -> List[Dict[str, Any]]:
     snow = biome.lower() == "snow"
     props: List[Dict[str, Any]] = [
         part("SpawnPad", (0, 3, 0), (12, 1, 12), "Neon", (0, 170, 255), "Cylinder"),
-        house_model("House_A", (-38, 0), 0, mats),
-        house_model("House_B", (32, 0), 8, mats),
-        house_model("House_C", (0, 0), 42, mats),
+        house_model("House_A", -38, 0, 0, mats)
+        house_model("House_B", 0, 0, 90, mats)
+        house_model("House_C", 38, 0, 180, mats)
         lamp_model("Lamp_A", -16, 10),
         lamp_model("Lamp_B", 16, 10),
         crate_model("Crate_A", 6, 18),
