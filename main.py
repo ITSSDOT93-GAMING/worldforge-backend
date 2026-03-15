@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 app = FastAPI()
 
 PUBLIC_BASE_URL = "https://worldforge-backend-production.up.railway.app"
-
 ROBLOX_SEARCH_URL = "https://apis.roblox.com/toolbox-service/v1/marketplace/search"
 
 RATE_BUCKET: dict[str, list[float]] = {}
@@ -49,7 +48,7 @@ async def rate_limit(request: Request, call_next):
 
 @app.get("/")
 async def root():
-    return {"ok": True, "service": "worldforge-backend", "version": "9.0.0"}
+    return {"ok": True, "service": "worldforge-backend", "version": "10.0.0"}
 
 
 @app.get("/config")
@@ -70,6 +69,7 @@ def safe_material(name: str) -> str:
         "Grass", "Ground", "Rock", "Slate", "Sand", "Snow", "Mud",
         "Basalt", "Wood", "WoodPlanks", "Cobblestone", "Concrete",
         "Glass", "Neon", "Fabric", "Brick", "Limestone", "LeafyGrass",
+        "Water",
     }
     return name if name in allowed else "SmoothPlastic"
 
@@ -94,46 +94,42 @@ def part(
 
 
 def model(name: str, parts: List[Dict[str, Any]]) -> Dict[str, Any]:
-    return {
-        "kind": "Model",
-        "Name": name,
-        "parts": parts,
-    }
+    return {"kind": "Model", "Name": name, "parts": parts}
 
 
 def size_settings(size: str) -> Dict[str, Any]:
     size = size.lower()
     if size == "small":
         return {
-            "span": 260,
+            "span": 280,
             "zone_distance": 120,
-            "extra_houses": 1,
             "extra_trees": 8,
             "extra_rocks": 6,
+            "house_count": 4,
         }
     if size == "large":
         return {
-            "span": 620,
-            "zone_distance": 240,
-            "extra_houses": 5,
+            "span": 700,
+            "zone_distance": 250,
             "extra_trees": 26,
             "extra_rocks": 18,
+            "house_count": 10,
         }
     return {
-        "span": 420,
-        "zone_distance": 170,
-        "extra_houses": 3,
+        "span": 480,
+        "zone_distance": 180,
         "extra_trees": 16,
         "extra_rocks": 10,
+        "house_count": 7,
     }
 
 
 def density_multiplier(density: str) -> float:
     density = density.lower()
     if density == "sparse":
-        return 0.65
+        return 0.7
     if density == "dense":
-        return 1.75
+        return 1.8
     return 1.0
 
 
@@ -145,77 +141,72 @@ def biome_style(biome: str) -> Dict[str, Any]:
             "ground": "Snow",
             "secondary_ground": "Slate",
             "rock": "Slate",
-            "wood": "WoodPlanks",
-            "roof": "Brick",
-            "water_color": rgb(180, 220, 255),
+            "water": "Water",
             "tree_leaves": (220, 235, 220),
             "ambient": rgb(105, 110, 125),
             "outdoor": rgb(140, 145, 160),
             "clock": 13,
+            "house_theme": "winter cabin",
         }
     if biome == "desert":
         return {
             "ground": "Sand",
             "secondary_ground": "Sand",
             "rock": "Limestone",
-            "wood": "WoodPlanks",
-            "roof": "Brick",
-            "water_color": rgb(120, 180, 220),
+            "water": "Water",
             "tree_leaves": (130, 170, 90),
             "ambient": rgb(115, 105, 90),
             "outdoor": rgb(150, 140, 120),
             "clock": 15,
+            "house_theme": "desert house",
         }
     if biome == "mountain":
         return {
             "ground": "Rock",
             "secondary_ground": "Slate",
             "rock": "Slate",
-            "wood": "WoodPlanks",
-            "roof": "Brick",
-            "water_color": rgb(130, 170, 210),
+            "water": "Water",
             "tree_leaves": (80, 130, 80),
             "ambient": rgb(95, 95, 105),
             "outdoor": rgb(125, 125, 135),
             "clock": 14,
+            "house_theme": "mountain cabin",
         }
     if biome == "swamp":
         return {
             "ground": "Mud",
             "secondary_ground": "Grass",
             "rock": "Rock",
-            "wood": "WoodPlanks",
-            "roof": "Brick",
-            "water_color": rgb(80, 110, 70),
+            "water": "Water",
             "tree_leaves": (75, 110, 65),
             "ambient": rgb(85, 95, 80),
             "outdoor": rgb(110, 120, 95),
             "clock": 16,
+            "house_theme": "swamp shack",
         }
     if biome == "plains":
         return {
             "ground": "Grass",
             "secondary_ground": "Ground",
             "rock": "Rock",
-            "wood": "WoodPlanks",
-            "roof": "Brick",
-            "water_color": rgb(110, 170, 230),
+            "water": "Water",
             "tree_leaves": (90, 170, 85),
             "ambient": rgb(100, 100, 105),
             "outdoor": rgb(130, 130, 140),
             "clock": 14,
+            "house_theme": "village house",
         }
+
     return {
         "ground": "Grass",
         "secondary_ground": "Ground",
         "rock": "Rock",
-        "wood": "WoodPlanks",
-        "roof": "Brick",
-        "water_color": rgb(110, 170, 230),
+        "water": "Water",
         "tree_leaves": (85, 150, 80),
         "ambient": rgb(100, 100, 110),
         "outdoor": rgb(130, 130, 140),
         "clock": 15,
+        "house_theme": "forest house",
     }
 
 
@@ -243,69 +234,58 @@ def terrain_for_world(size: str, biome: str, template: str) -> List[Dict[str, An
         },
         {
             "kind": "FillBall",
-            "position": vec(-zone, 28, -zone * 0.5),
-            "radius": 52,
+            "position": vec(-zone, 30, -zone * 0.5),
+            "radius": 56,
             "material": b["rock"],
         },
         {
             "kind": "FillBall",
-            "position": vec(zone * 0.9, 20, zone * 0.6),
+            "position": vec(zone * 0.95, 20, zone * 0.6),
             "radius": 44,
             "material": b["secondary_ground"],
         },
         {
             "kind": "FillBall",
-            "position": vec(zone * 0.3, 18, -zone * 0.8),
-            "radius": 30,
+            "position": vec(zone * 0.35, 18, -zone * 0.82),
+            "radius": 34,
             "material": b["secondary_ground"],
+        },
+        {
+            "kind": "ClearSphere",
+            "position": vec(-zone, 26, -zone * 0.5),
+            "radius": 28,
+        },
+        path_block(0, 0, 18, 70, "Ground"),
+        path_block(0, 70, 18, 120, "Ground"),
+        {
+            "kind": "FillBlock",
+            "position": vec(0, 1, zone),
+            "size": vec(18, 2, 140),
+            "material": "Ground",
+        },
+        {
+            "kind": "FillBlock",
+            "position": vec(zone * 0.35, 1, zone * 0.45),
+            "size": vec(100, 2, 16),
+            "material": "Ground",
+        },
+        {
+            "kind": "FillBlock",
+            "position": vec(-zone * 0.35, 1, zone * 0.25),
+            "size": vec(90, 2, 16),
+            "material": "Ground",
         },
     ]
 
-    # Main roads / paths
-    terrain.extend(
-        [
-            path_block(0, 0, 18, 70, "Ground"),
-            path_block(0, 70, 18, 120, "Ground"),
-            {
-                "kind": "FillBlock",
-                "position": vec(0, 1, zone),
-                "size": vec(18, 2, 120),
-                "material": "Ground",
-            },
-            {
-                "kind": "FillBlock",
-                "position": vec(zone * 0.35, 1, zone * 0.45),
-                "size": vec(90, 2, 16),
-                "material": "Ground",
-            },
-            {
-                "kind": "FillBlock",
-                "position": vec(-zone * 0.35, 1, zone * 0.25),
-                "size": vec(90, 2, 16),
-                "material": "Ground",
-            },
-        ]
-    )
-
-    # Water crossing for adventure/survival
     if template.lower() in {"adventure", "survival"}:
         terrain.append(
             {
                 "kind": "FillBlock",
                 "position": vec(zone * 0.35, -1, zone * 0.45),
                 "size": vec(110, 6, 28),
-                "material": "Water",
+                "material": b["water"],
             }
         )
-
-    # Cave opening area
-    terrain.append(
-        {
-            "kind": "ClearSphere",
-            "position": vec(-zone, 24, -zone * 0.5),
-            "radius": 18,
-        }
-    )
 
     if biome.lower() in {"mountain", "snow"}:
         terrain.extend(
@@ -319,25 +299,12 @@ def terrain_for_world(size: str, biome: str, template: str) -> List[Dict[str, An
                 {
                     "kind": "ClearSphere",
                     "position": vec(-zone * 0.82, 36, -zone * 0.66),
-                    "radius": 22,
+                    "radius": 28,
                 },
             ]
         )
 
     return terrain
-
-
-def house_model(name: str, x: float, z: float, style: Dict[str, Any]) -> Dict[str, Any]:
-    return model(
-        name,
-        [
-            part("Base", (x, 2.5, z), (18, 5, 18), style["wood"], (150, 110, 75)),
-            part("Roof", (x, 8.5, z), (20, 4, 20), style["roof"], (110, 55, 50)),
-            part("Door", (x, 4, z + 9.1), (3, 6, 1), "Wood", (90, 65, 45)),
-            part("WindowLeft", (x - 5, 6, z + 9.2), (3, 3, 1), "Glass", (120, 190, 255)),
-            part("WindowRight", (x + 5, 6, z + 9.2), (3, 3, 1), "Glass", (120, 190, 255)),
-        ],
-    )
 
 
 def market_stall(name: str, x: float, z: float, color: Tuple[int, int, int]) -> Dict[str, Any]:
@@ -421,12 +388,14 @@ def npc_marker(name: str, x: float, z: float, color: Tuple[int, int, int]) -> Di
 
 
 def bridge_model(name: str, x: float, z: float) -> Dict[str, Any]:
-    parts = [
-        part("Deck", (x, 2.5, z), (26, 1, 10), "WoodPlanks", (150, 110, 75)),
-        part("RailL", (x - 12, 4, z), (1, 3, 10), "Wood", (95, 70, 50)),
-        part("RailR", (x + 12, 4, z), (1, 3, 10), "Wood", (95, 70, 50)),
-    ]
-    return model(name, parts)
+    return model(
+        name,
+        [
+            part("Deck", (x, 2.5, z), (26, 1, 10), "WoodPlanks", (150, 110, 75)),
+            part("RailL", (x - 12, 4, z), (1, 3, 10), "Wood", (95, 70, 50)),
+            part("RailR", (x + 12, 4, z), (1, 3, 10), "Wood", (95, 70, 50)),
+        ],
+    )
 
 
 def ruin_model(name: str, x: float, z: float) -> Dict[str, Any]:
@@ -441,15 +410,59 @@ def ruin_model(name: str, x: float, z: float) -> Dict[str, Any]:
     )
 
 
-def cave_marker_model(name: str, x: float, z: float) -> Dict[str, Any]:
+def cave_entrance_model(name: str, x: float, z: float, style: Dict[str, Any]) -> Dict[str, Any]:
     return model(
         name,
         [
-            part("EntranceMarker", (x, 4, z), (10, 8, 2), "Neon", (180, 120, 255)),
-            part("TorchL", (x - 6, 3, z + 2), (1, 6, 1), "Wood", (95, 70, 50)),
-            part("TorchR", (x + 6, 3, z + 2), (1, 6, 1), "Wood", (95, 70, 50)),
+            part("RockLeft", (x - 8, 7, z), (10, 14, 8), style["rock"], (110, 110, 115)),
+            part("RockRight", (x + 8, 7, z), (10, 14, 8), style["rock"], (110, 110, 115)),
+            part("RockTop", (x, 13, z), (18, 6, 8), style["rock"], (110, 110, 115)),
+            part("TorchLeft", (x - 10, 4, z + 4), (1, 8, 1), "Wood", (95, 70, 50)),
+            part("TorchRight", (x + 10, 4, z + 4), (1, 8, 1), "Wood", (95, 70, 50)),
+            part("Marker", (x, 2, z + 2), (8, 1, 4), "Neon", (180, 120, 255)),
         ],
     )
+
+
+def camp_zone(zone: float) -> List[Dict[str, Any]]:
+    return [
+        model(
+            "SpawnTent_A",
+            [
+                part("TentBase", (-12, 2, zone), (10, 4, 8), "Fabric", (170, 140, 90)),
+                part("TentPole", (-12, 5, zone), (1, 6, 1), "Wood", (95, 70, 50)),
+            ],
+        ),
+        model(
+            "SpawnTent_B",
+            [
+                part("TentBase", (12, 2, zone), (10, 4, 8), "Fabric", (140, 160, 90)),
+                part("TentPole", (12, 5, zone), (1, 6, 1), "Wood", (95, 70, 50)),
+            ],
+        ),
+        crate_model("CampCrate_A", -6, zone - 10),
+        crate_model("CampCrate_B", 6, zone - 8),
+        npc_marker("NPC_Guide", 0, zone + 14, (120, 255, 120)),
+        quest_board("CampBoard", 0, zone + 28),
+    ]
+
+
+def village_support_props(zone: float) -> List[Dict[str, Any]]:
+    return [
+        market_stall("MarketRed", -18, zone + 28, (180, 70, 70)),
+        market_stall("MarketBlue", 18, zone + 28, (70, 110, 180)),
+        quest_board("QuestBoard_Main", 0, zone + 44),
+        npc_marker("NPC_QuestGiver", 0, zone + 18, (255, 220, 80)),
+        npc_marker("NPC_Merchant", -18, zone + 20, (80, 220, 255)),
+        npc_marker("NPC_Guard", 22, zone + 20, (255, 120, 120)),
+        lamp_model("VillageLamp_A", -20, zone - 6),
+        lamp_model("VillageLamp_B", 20, zone - 6),
+        lamp_model("VillageLamp_C", -20, zone + 62),
+        lamp_model("VillageLamp_D", 20, zone + 62),
+        crate_model("VillageCrate_A", -10, zone + 36),
+        crate_model("VillageCrate_B", 10, zone + 36),
+        chest_model("VillageRewardChest", 0, zone + 72),
+    ]
 
 
 def filler_trees(style: Dict[str, Any], count: int, radius: float, name_prefix: str) -> List[Dict[str, Any]]:
@@ -476,93 +489,161 @@ def filler_rocks(style: Dict[str, Any], count: int, radius: float, name_prefix: 
     return out
 
 
-def village_zone(style: Dict[str, Any], zone: float, house_count: int) -> List[Dict[str, Any]]:
-    props: List[Dict[str, Any]] = []
+def house_positions_for_zone(zone: float, count: int) -> List[Tuple[float, float, float]]:
+    positions = [
+        (-50, 4, zone),
+        (-24, 4, zone + 18),
+        (0, 4, zone),
+        (26, 4, zone + 16),
+        (52, 4, zone),
+        (-38, 4, zone + 46),
+        (-8, 4, zone + 56),
+        (22, 4, zone + 48),
+        (52, 4, zone + 58),
+        (-70, 4, zone + 76),
+        (74, 4, zone + 80),
+    ]
+    return positions[:count]
 
-    base_positions = [
-        (-42, zone),
-        (0, zone),
-        (42, zone),
-        (-84, zone + 30),
-        (84, zone + 30),
-        (-42, zone + 60),
-        (42, zone + 60),
+
+def search_creator_store_assets(keyword: str, limit: int = 5) -> List[Dict[str, Any]]:
+    params = {
+        "keyword": keyword,
+        "limit": limit,
+        "includeOnlyVerifiedCreators": "false",
+    }
+    try:
+        response = requests.get(ROBLOX_SEARCH_URL, params=params, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+    except Exception:
+        return []
+
+    results: List[Dict[str, Any]] = []
+    for item in payload.get("data", []):
+        asset_id = item.get("asset", {}).get("id") or item.get("id")
+        name = item.get("asset", {}).get("name") or item.get("name") or keyword
+        if not asset_id:
+            continue
+        results.append(
+            {
+                "assetId": int(asset_id),
+                "name": name,
+                "query": keyword,
+            }
+        )
+    return results
+
+
+def search_store_houses(theme: str, count: int = 6) -> List[Dict[str, Any]]:
+    queries = [
+        f"{theme}",
+        f"{theme} house",
+        f"{theme} building",
+        f"{theme} cottage",
+        f"{theme} village house",
     ]
 
-    for i in range(min(house_count, len(base_positions))):
-        x, z = base_positions[i]
-        props.append(house_model(f"House_{i+1}", x, z, style))
+    found: List[Dict[str, Any]] = []
+    seen: set[int] = set()
 
-    props.extend(
-        [
-            market_stall("MarketRed", -20, zone + 18, (180, 70, 70)),
-            market_stall("MarketBlue", 20, zone + 18, (70, 110, 180)),
-            quest_board("QuestBoard_Main", 0, zone + 32),
-            npc_marker("NPC_QuestGiver", 0, zone + 14, (255, 220, 80)),
-            npc_marker("NPC_Merchant", -20, zone + 10, (80, 220, 255)),
-            npc_marker("NPC_Guard", 22, zone + 10, (255, 120, 120)),
-            lamp_model("VillageLamp_A", -16, zone - 10),
-            lamp_model("VillageLamp_B", 16, zone - 10),
-            lamp_model("VillageLamp_C", -16, zone + 46),
-            lamp_model("VillageLamp_D", 16, zone + 46),
-            crate_model("VillageCrate_A", -8, zone + 26),
-            crate_model("VillageCrate_B", 10, zone + 24),
-        ]
-    )
+    for query in queries:
+        for item in search_creator_store_assets(query, 6):
+            asset_id = item["assetId"]
+            if asset_id in seen:
+                continue
+            seen.add(asset_id)
+            found.append(item)
+            if len(found) >= count:
+                return found
 
-    return props
+    return found
 
 
-def camp_zone(zone: float) -> List[Dict[str, Any]]:
-    return [
-        model(
-            "SpawnTent_A",
-            [
-                part("TentBase", (-12, 2, zone), (10, 4, 8), "Fabric", (170, 140, 90)),
-                part("TentPole", (-12, 5, zone), (1, 6, 1), "Wood", (95, 70, 50)),
-            ],
-        ),
-        model(
-            "SpawnTent_B",
-            [
-                part("TentBase", (12, 2, zone), (10, 4, 8), "Fabric", (140, 160, 90)),
-                part("TentPole", (12, 5, zone), (1, 6, 1), "Wood", (95, 70, 50)),
-            ],
-        ),
-        crate_model("CampCrate_A", -6, zone - 10),
-        crate_model("CampCrate_B", 6, zone - 8),
-        npc_marker("NPC_Guide", 0, zone + 14, (120, 255, 120)),
-        quest_board("CampBoard", 0, zone + 28),
-    ]
+def placed_store_assets(search_results: List[Dict[str, Any]], positions: List[Tuple[float, float, float]]) -> List[Dict[str, Any]]:
+    placed: List[Dict[str, Any]] = []
+    for i, pos in enumerate(positions):
+        if i >= len(search_results):
+            break
+        placed.append(
+            {
+                "assetId": search_results[i]["assetId"],
+                "position": vec(*pos),
+            }
+        )
+    return placed
 
 
-def adventure_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[str, Any]]:
+def asset_queries_for_prompt(prompt: str, biome: str, template: str) -> List[str]:
+    text = f"{prompt} {biome} {template}".lower()
+    queries: List[str] = []
+
+    if "village" in text or template == "village":
+        queries += ["market stall", "lamp post", "barrel", "crate"]
+    if "forest" in text or biome in {"forest", "plains", "swamp"}:
+        queries += ["tree", "bush"]
+    if "cave" in text or "dungeon" in text or template == "dungeon":
+        queries += ["rock", "ruin", "cave"]
+    if "bridge" in text:
+        queries += ["bridge"]
+    if biome == "snow":
+        queries += ["snow tree", "winter prop"]
+    if biome == "desert":
+        queries += ["cactus", "desert ruin"]
+
+    if not queries:
+        queries = ["tree", "rock"]
+
+    return queries[:6]
+
+
+def pick_assets(prompt: str, biome: str, template: str, density: str) -> List[Dict[str, Any]]:
+    found: List[Dict[str, Any]] = []
+    seen: set[int] = set()
+    max_assets = 4 if density == "sparse" else 8 if density == "normal" else 12
+
+    for query in asset_queries_for_prompt(prompt, biome, template):
+        for item in search_creator_store_assets(query, 3):
+            asset_id = item["assetId"]
+            if asset_id in seen:
+                continue
+            seen.add(asset_id)
+            found.append(
+                {
+                    "assetId": asset_id,
+                    "position": vec(0, 4, 0),
+                    "query": query,
+                }
+            )
+            if len(found) >= max_assets:
+                return found
+
+    return found
+
+
+def adventure_layout(style: Dict[str, Any], size: str, density: str) -> Tuple[List[Dict[str, Any]], List[Tuple[float, float, float]]]:
     s = size_settings(size)
     zone = s["zone_distance"]
     mult = density_multiplier(density)
 
-    house_count = 3 + s["extra_houses"]
-    tree_count = int(s["extra_trees"] * mult)
-    rock_count = int(s["extra_rocks"] * mult)
-
     props: List[Dict[str, Any]] = []
     props.extend(camp_zone(0))
-    props.extend(village_zone(style, zone, house_count))
+    props.extend(village_support_props(zone))
     props.extend(
         [
             bridge_model("Bridge_Main", zone * 0.35, zone * 0.45),
-            cave_marker_model("CaveEntrance", -zone, -zone * 0.5),
-            ruin_model("AncientRuins", zone * 0.7, zone * 0.55),
-            chest_model("RewardChest", zone * 0.72, zone * 0.62),
-            npc_marker("NPC_Explorer", zone * 0.65, zone * 0.5, (180, 140, 255)),
+            cave_entrance_model("CaveEntrance", -zone, -zone * 0.5, style),
+            ruin_model("AncientRuins", zone * 0.72, zone * 0.58),
+            chest_model("RewardChest", zone * 0.78, zone * 0.66),
+            npc_marker("NPC_Explorer", zone * 0.65, zone * 0.54, (180, 140, 255)),
         ]
     )
-    props.extend(filler_trees(style, tree_count, s["span"] * 0.42, "Tree"))
-    props.extend(filler_rocks(style, rock_count, s["span"] * 0.38, "Rock"))
-    return props
+    props.extend(filler_trees(style, int(s["extra_trees"] * mult), s["span"] * 0.42, "Tree"))
+    props.extend(filler_rocks(style, int(s["extra_rocks"] * mult), s["span"] * 0.38, "Rock"))
+    return props, house_positions_for_zone(zone, s["house_count"])
 
 
-def survival_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[str, Any]]:
+def survival_layout(style: Dict[str, Any], size: str, density: str) -> Tuple[List[Dict[str, Any]], List[Tuple[float, float, float]]]:
     s = size_settings(size)
     zone = s["zone_distance"]
     mult = density_multiplier(density)
@@ -576,21 +657,21 @@ def survival_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict
             chest_model("StarterChest", 0, 38),
             npc_marker("NPC_Survivor", 0, 18, (255, 220, 80)),
             bridge_model("RiverBridge", zone * 0.35, zone * 0.45),
-            cave_marker_model("ForageCave", -zone, -zone * 0.5),
+            cave_entrance_model("ForageCave", -zone, -zone * 0.5, style),
         ]
     )
-    props.extend(village_zone(style, zone, 2 + s["extra_houses"]))
+    props.extend(village_support_props(zone))
     props.extend(filler_trees(style, int(s["extra_trees"] * 1.2 * mult), s["span"] * 0.45, "Tree"))
     props.extend(filler_rocks(style, int(s["extra_rocks"] * 1.25 * mult), s["span"] * 0.4, "Rock"))
-    return props
+    return props, house_positions_for_zone(zone, max(3, s["house_count"] - 1))
 
 
-def village_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[str, Any]]:
+def village_layout(style: Dict[str, Any], size: str, density: str) -> Tuple[List[Dict[str, Any]], List[Tuple[float, float, float]]]:
     s = size_settings(size)
     mult = density_multiplier(density)
-    house_count = 5 + s["extra_houses"]
 
-    props = village_zone(style, 40, house_count)
+    zone = 40
+    props = village_support_props(zone)
     props.extend(
         [
             market_stall("MarketGold", -32, 74, (180, 150, 60)),
@@ -600,10 +681,10 @@ def village_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[
     )
     props.extend(filler_trees(style, int(s["extra_trees"] * mult), s["span"] * 0.4, "Tree"))
     props.extend(filler_rocks(style, int(s["extra_rocks"] * mult), s["span"] * 0.35, "Rock"))
-    return props
+    return props, house_positions_for_zone(zone, s["house_count"])
 
 
-def dungeon_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[str, Any]]:
+def dungeon_layout(style: Dict[str, Any], size: str, density: str) -> Tuple[List[Dict[str, Any]], List[Tuple[float, float, float]]]:
     s = size_settings(size)
     zone = s["zone_distance"]
     mult = density_multiplier(density)
@@ -613,7 +694,7 @@ def dungeon_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[
         camp_zone(0)[1],
         npc_marker("NPC_DungeonGuide", 0, 16, (255, 180, 80)),
         quest_board("DungeonBoard", 0, 32),
-        cave_marker_model("DungeonEntrance", -zone * 0.7, -40),
+        cave_entrance_model("DungeonEntrance", -zone * 0.7, -40, style),
         ruin_model("OuterRuins_A", 30, zone * 0.4),
         ruin_model("OuterRuins_B", -30, zone * 0.55),
         chest_model("DungeonRewardChest", 0, zone * 0.65),
@@ -622,10 +703,10 @@ def dungeon_layout(style: Dict[str, Any], size: str, density: str) -> List[Dict[
     ]
     props.extend(filler_trees(style, int(s["extra_trees"] * 0.7 * mult), s["span"] * 0.4, "Tree"))
     props.extend(filler_rocks(style, int(s["extra_rocks"] * 1.5 * mult), s["span"] * 0.4, "Rock"))
-    return props
+    return props, house_positions_for_zone(70, max(2, s["house_count"] - 3))
 
 
-def choose_props(template: str, size: str, biome: str, density: str) -> List[Dict[str, Any]]:
+def choose_layout(template: str, size: str, biome: str, density: str) -> Tuple[List[Dict[str, Any]], List[Tuple[float, float, float]]]:
     style = biome_style(biome)
     template = template.lower()
 
@@ -677,75 +758,6 @@ def script_bundle(template: str) -> List[Dict[str, str]]:
     ]
 
 
-def asset_queries_for_prompt(prompt: str, biome: str, template: str) -> List[str]:
-    text = f"{prompt} {biome} {template}".lower()
-    queries: List[str] = []
-
-    if "village" in text or template == "village":
-        queries += ["wood house", "market stall", "lamp post"]
-    if "forest" in text or biome in {"forest", "plains", "swamp"}:
-        queries += ["tree", "bush"]
-    if "cave" in text or "dungeon" in text or template == "dungeon":
-        queries += ["rock", "ruin", "cave"]
-    if "bridge" in text:
-        queries += ["bridge"]
-    if biome == "snow":
-        queries += ["snow tree", "winter cabin"]
-    if biome == "desert":
-        queries += ["cactus", "desert ruin"]
-
-    if not queries:
-        queries = ["tree", "rock"]
-
-    return queries[:6]
-
-
-def search_creator_store_assets(keyword: str, limit: int = 3) -> List[Dict[str, Any]]:
-    params = {
-        "keyword": keyword,
-        "limit": limit,
-        "includeOnlyVerifiedCreators": "false",
-    }
-    try:
-        response = requests.get(ROBLOX_SEARCH_URL, params=params, timeout=10)
-        response.raise_for_status()
-        payload = response.json()
-    except Exception:
-        return []
-
-    results: List[Dict[str, Any]] = []
-    for item in payload.get("data", []):
-        asset_id = item.get("asset", {}).get("id") or item.get("id")
-        if not asset_id:
-            continue
-        results.append(
-            {
-                "assetId": int(asset_id),
-                "position": vec(0, 4, 0),
-                "query": keyword,
-            }
-        )
-    return results
-
-
-def pick_assets(prompt: str, biome: str, template: str, density: str) -> List[Dict[str, Any]]:
-    found: List[Dict[str, Any]] = []
-    seen: set[int] = set()
-    max_assets = 4 if density == "sparse" else 8 if density == "normal" else 12
-
-    for query in asset_queries_for_prompt(prompt, biome, template):
-        for item in search_creator_store_assets(query, 3):
-            asset_id = item["assetId"]
-            if asset_id in seen:
-                continue
-            seen.add(asset_id)
-            found.append(item)
-            if len(found) >= max_assets:
-                return found
-
-    return found
-
-
 def selection_targets() -> List[str]:
     return [
         "SpawnPad",
@@ -767,6 +779,36 @@ async def roblox_worldgen(body: GenerateRequest):
     caps = body.capabilities or {}
 
     style = biome_style(biome)
+    primitive_props: List[Dict[str, Any]] = []
+    store_assets: List[Dict[str, Any]] = []
+
+    layout_props, village_house_positions = choose_layout(template, size, biome, density)
+
+    if caps.get("props", True):
+        primitive_props.append(
+            part("SpawnPad", (0, 3, 0), (14, 1, 14), "Neon", (0, 170, 255), "Cylinder")
+        )
+        primitive_props.extend(layout_props)
+
+        house_theme = style["house_theme"]
+        if template == "village":
+            house_theme = f"{biome} village house"
+        elif template == "adventure":
+            house_theme = f"{biome} fantasy house"
+        elif template == "survival":
+            house_theme = f"{biome} cabin"
+
+        house_results = search_store_houses(house_theme, len(village_house_positions))
+        store_assets.extend(placed_store_assets(house_results, village_house_positions))
+
+        extra_assets = pick_assets(prompt, biome, template, density)
+        store_assets.extend(extra_assets)
+
+    if not caps.get("npcs", True):
+        primitive_props = [
+            p for p in primitive_props
+            if not str(p.get("Name", "")).startswith("NPC_")
+        ]
 
     plan: Dict[str, Any] = {
         "folders": [
@@ -781,33 +823,15 @@ async def roblox_worldgen(body: GenerateRequest):
             "ClockTime": style["clock"],
             "Brightness": 2,
             "FogStart": 90,
-            "FogEnd": 850 if size == "large" else 650,
+            "FogEnd": 950 if size == "large" else 720,
             "Ambient": style["ambient"],
             "OutdoorAmbient": style["outdoor"],
-        },
+        } if caps.get("lighting", True) else {},
         "terrain": terrain_for_world(size, biome, template) if caps.get("terrain", True) else [],
-        "primitiveProps": [],
-        "storeAssets": [],
+        "primitiveProps": primitive_props,
+        "storeAssets": store_assets,
         "scripts": script_bundle(template) if caps.get("scripts", True) else [],
         "selectionTargets": selection_targets(),
     }
-
-    if caps.get("props", True):
-        plan["primitiveProps"].append(
-            part("SpawnPad", (0, 3, 0), (14, 1, 14), "Neon", (0, 170, 255), "Cylinder")
-        )
-        plan["primitiveProps"].extend(choose_props(template, size, biome, density))
-
-    if caps.get("props", True):
-        plan["storeAssets"] = pick_assets(prompt, biome, template, density)
-
-    if not caps.get("npcs", True):
-        plan["primitiveProps"] = [
-            p for p in plan["primitiveProps"]
-            if not str(p.get("Name", "")).startswith("NPC_")
-        ]
-
-    if not caps.get("lighting", True):
-        plan["lighting"] = {}
 
     return plan
