@@ -12,6 +12,11 @@ ASSET_CATALOG = json.loads((APP_DIR/'asset_catalog.json').read_text(encoding='ut
 
 app = FastAPI(title='WorldForge AI Backend', version='6.0.0')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_credentials=False, allow_methods=['*'], allow_headers=['*'])
+@app.get("/config")
+async def get_config():
+    return {
+        "endpoint": "https://worldforge-backend-production.up.railway.app/roblox/worldgen"
+    }
 
 RATE_LIMIT_WINDOW_SECONDS = int(os.getenv('RATE_LIMIT_WINDOW_SECONDS', '60'))
 RATE_LIMIT_MAX_REQUESTS = int(os.getenv('RATE_LIMIT_MAX_REQUESTS', '10'))
